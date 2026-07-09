@@ -51,14 +51,14 @@ body.folded #panel .p-body,body.folded #panel .p-foot,body.folded #panel .note{d
 <div id="panel">
   <div class="p-head">
     <h1>🚴 Roquecor Cycling Week — area map <button class="collapse" id="fold" title="Collapse">–</button></h1>
-    <p>Everything within reach of the base: Tour de France roads, the iconic climbs, and useful stops. Tap a layer to show or hide it, tap a pin for details.</p>
+    <p>Everything within reach of the base: the five Tour de France stages as a route heatmap, the iconic climbs, and useful stops. Tap a layer to show or hide it, tap a pin or line for details.</p>
   </div>
   <div class="p-body" id="legend"></div>
   <div class="p-foot">
     <button class="b green" id="fitBtn">Fit everything</button>
     <button class="b ghost" id="homeBtn">Back to Roquecor</button>
   </div>
-  <div class="note">Pins sit at village / venue level and are approximate; the Tour de France lines are indicative corridors near Roquecor, not exact GPS tracks. Prices are researched estimates, confirm before booking.</div>
+  <div class="note">Pins sit at village / venue level (approximate). The five glowing Tour de France lines are full stages, reconstructed along each stage's real towns and roads (not the exact official GPS). Tap "Fit everything" to see all five. Prices are researched estimates, confirm before booking.</div>
 </div>
 
 <script>
@@ -135,11 +135,28 @@ const POIS = [
   {c:"air",n:"Agen (AGF)",lat:44.1747,lon:0.5906,d:"~40 min. Domestic only (Paris-Orly) — confirm it's running for 2027."},
 ];
 
-// approximate TdF corridors near Roquecor (indicative, not GPS)
-const CORRIDORS = [
-  {name:"2022 Stage 19 (approx corridor)", pts:[[44.1069,0.8853],[44.2830,1.0480],[44.2636,1.1386],[44.3339,1.2064],[44.4478,1.4415]]},
-  {name:"2024 Stage 12 (Lot-valley run-in, approx)", pts:[[44.5019,1.1361],[44.5100,1.0800],[44.4984,0.9704],[44.4200,0.7900],[44.4081,0.7075]]},
+// Full TdF stage routes, reconstructed along each stage's real towns and roads (OSRM), as encoded polylines
+const HEAT = "#FF4A1C";
+const TDF_ROUTES = [
+  {name:"2022 Stage 19: Castelnau-Magnoac to Cahors", poly:"}qegGydlBkg@~iGulRuaIywRs}CimA}sDAerJsaGe~A}wKmgMixGghB{mLqxPgwOucDs`JsrJ}x@_iDrJuqCgHpq@{{AddF}hFr_F_rF~_DmtDbNufAdnGowD_}C_kDyWslBi{A_gCt~Buw@_wEilB{y@ukE_vIsl@{a@{dDxlC__EokFe|@lTc_CcpIoeCdn@nxBcrP`Lqp@c}@~SeoJg~Fcs@wgBlWyj@e{BajBscAifNcdCmsBkVqwFgfAg}A{nAmyJcnEy^"},
+  {name:"2024 Stage 12: Aurillac to Villeneuve-sur-Lot", poly:"kteqGin|MzyDlkFfGboKjsAj_A_RjcCz`Dx{B~w@hcDaq@nxBlJbnMylA~jC}x@xaHdg@riAui@r_Glb@jdAcr@zwBxP~dKbb@h\\ug@rgBhcCdsAiBbqE_vB|mKxjAreAat@hm@bYbl@f{A|BbuBj`@kPd|AvzErsEhV`kW~f@~`A~uBgdAnw@nx@_FfgDrr@piC{k@fqBpgChpC}c@vgBrhA~bVhxDtdGkS`xFnzAtk@pyAnnDzHf}Db}DbxBi_AxiAzCt~AkC_`Bl~AqsB~bGxnCnz@llDjzDbhFjLzwCnrJcvC~}@jbKkj@vaDxaAtjCi`A~xIhjDtmJpjM`dSeaAfvR"},
+  {name:"2024 Stage 13: Agen to Pau", poly:"mmxlGqiwBvpIpwQpIbfEyk@t`C|jCbfJpUttHuf@n|BfgAbjHdkLfmCmLbbCp_Aja@~eMziBzmB~gDxqEdr@dzKjyP`eGd_BxhEtzTluCpc@~`AvkDeP|nFxfH`uYdIziDf{BsdDblHq`AxvF{vIbuHcRlqMgtH~|Bvc@~dAhnC~uBwa@t}Bq`AvjCzbBlsBnkSj{BjBbSjlDx{F~sP"},
+  {name:"2007 Stage 17: Pau to Castelsarrasin", poly:"s}fgG|lgAx~@}cDm|AwhFbqFwd_@hoEwgMig@gmGteBe}Gwb@_hDidDlc@qYmpC_mAwH}_AchBkLeeD}sTk~FcnA}bI{fB_qD}dAopNxtAgpDofAsjMqMsy_@n~@cmG}WkjSh\\hl@hFur@ygUifFosMy~OovC_uAdBsqAeEzoAygEkeDmsElnBgaSmzBkiKamJwbBwgFrJuqCgHpq@at@wcGa|@pr@okCogCapAi`EsxEawEmwF}^_nAjyBo`Ch`@"},
+  {name:"2012 Stage 18: Blagnac to Brive-la-Gaillarde", poly:"yniiGokoG|uAuKmCkiCknEueAcfYbpHm~Jn~Jw{Mbw@awPuuG}nDjaJ_}NptJ_lD}tCqiA}bK_~Ci`FkrHk{UoiAwsAaaC~uD_uLkfAorBpoCmpOrx@soB~EgqJixLgaQ~|@ocE_lJyoHmsAsvWzaN}zM_t@|b@d|D}nAsxBpz@edAwlIfOylKksEe_H~wDehFssAweHfsEgkAqdH"},
 ];
+function decodePolyline(str){
+  let index=0,lat=0,lng=0,coords=[],shift,result,byte;
+  while(index<str.length){
+    shift=0;result=0;
+    do{ byte=str.charCodeAt(index++)-63; result|=(byte&0x1f)<<shift; shift+=5; }while(byte>=0x20);
+    lat += (result&1)?~(result>>1):(result>>1);
+    shift=0;result=0;
+    do{ byte=str.charCodeAt(index++)-63; result|=(byte&0x1f)<<shift; shift+=5; }while(byte>=0x20);
+    lng += (result&1)?~(result>>1):(result>>1);
+    coords.push([lat/1e5,lng/1e5]);
+  }
+  return coords;
+}
 
 const map = L.map('map',{zoomControl:false,scrollWheelZoom:true}).setView([44.36,1.02],10);
 L.control.zoom({position:'topright'}).addTo(map);
@@ -164,11 +181,14 @@ POIS.forEach(p=>{
   const m=L.marker([p.lat,p.lon],{icon:mkIcon(cat)}).bindPopup(popupHtml(p,cat),{maxWidth:260});
   m.addTo(groups[p.c]); counts[p.c]++; allLatLng.push([p.lat,p.lon]);
 });
-// corridors go into the tdf group
-CORRIDORS.forEach(r=>{
-  L.polyline(r.pts,{color:CATS.tdf.color,weight:4,opacity:.85,dashArray:'2,9',lineCap:'round'})
-    .bindPopup(`<div class="pop-t">${r.name}</div><div class="pop-d">Indicative Tour de France corridor near Roquecor, not an exact GPS track.</div>`)
-    .addTo(groups.tdf);
+// TdF full routes go into the tdf group, drawn heatmap-style (soft glow + core line)
+const routeLatLng=[];
+TDF_ROUTES.forEach(r=>{
+  const pts=decodePolyline(r.poly);
+  for(const p of pts) routeLatLng.push(p);
+  const pop=`<div><span class="pill-tag" style="background:${HEAT}">Tour de France</span><div class="pop-t">${r.name}</div><div class="pop-d">Reconstructed along the stage's real towns and roads. Not the exact official GPS track.</div></div>`;
+  L.polyline(pts,{color:HEAT,weight:9,opacity:.16,lineCap:'round',lineJoin:'round'}).addTo(groups.tdf);
+  L.polyline(pts,{color:HEAT,weight:3,opacity:.6,lineCap:'round',lineJoin:'round'}).bindPopup(pop,{maxWidth:260}).addTo(groups.tdf);
 });
 Object.keys(groups).forEach(k=>groups[k].addTo(map));
 
@@ -188,9 +208,10 @@ Object.keys(CATS).forEach(k=>{
   legend.appendChild(row);
 });
 
-const bounds=L.latLngBounds(allLatLng);
-function fitAll(){ map.fitBounds(bounds,{padding:[60,60]}); }
-fitAll();
+const localBounds=L.latLngBounds(allLatLng);
+const fullBounds=L.latLngBounds(allLatLng.concat(routeLatLng));
+function fitAll(){ map.fitBounds(fullBounds,{padding:[40,40]}); }
+map.fitBounds(localBounds,{padding:[60,60]});
 document.getElementById('fitBtn').addEventListener('click',fitAll);
 document.getElementById('homeBtn').addEventListener('click',()=>map.flyTo([44.3228,0.9442],12,{duration:.8}));
 document.getElementById('fold').addEventListener('click',e=>{
