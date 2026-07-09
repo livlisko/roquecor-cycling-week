@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Roquecor Cycling Week — Area Map</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--green:#1B5E20;--ink:#1c2420;--muted:#6b7280;--line:#e4e7e0}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;color:var(--ink)}
+#map{position:absolute;inset:0;background:#e9ede4}
+.mk{width:30px;height:30px;border-radius:50% 50% 50% 2px;transform:rotate(45deg);display:flex;align-items:center;justify-content:center;
+  border:2px solid #fff;box-shadow:0 2px 7px rgba(0,0,0,.35)}
+.mk > span{transform:rotate(-45deg);font-size:15px;line-height:1}
+#panel{position:absolute;top:14px;left:14px;z-index:1000;width:326px;max-width:calc(100vw - 28px);
+  background:rgba(255,255,255,.97);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 34px rgba(20,40,20,.22);
+  max-height:calc(100vh - 28px);display:flex;flex-direction:column;overflow:hidden}
+.p-head{background:linear-gradient(120deg,#17491d,#1B5E20 60%,#2E7D32);color:#fff;padding:15px 16px}
+.p-head h1{font-size:17px;font-weight:800;margin:0;display:flex;align-items:center;gap:8px}
+.p-head p{margin:6px 0 0;font-size:12px;color:#dcebdd;line-height:1.45}
+.p-body{padding:10px 14px 6px;overflow:auto}
+.legrow{display:flex;align-items:center;gap:9px;padding:7px 6px;border-radius:9px;cursor:pointer;user-select:none}
+.legrow:hover{background:#f2f5ef}
+.legrow input{display:none}
+.dot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex:0 0 auto;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.legrow .nm{font-size:13px;font-weight:600;flex:1}
+.legrow .ct{font-size:11px;font-weight:700;color:var(--muted);background:#eef2ea;border-radius:20px;padding:2px 8px}
+.legrow.off{opacity:.4}
+.legrow.off .nm{text-decoration:line-through}
+.p-foot{border-top:1px solid var(--line);padding:10px 14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.b{font-family:inherit;cursor:pointer;border:none;border-radius:9px;font-weight:700;font-size:12px;padding:8px 11px}
+.b.green{background:var(--green);color:#fff}.b.ghost{background:#fff;color:var(--green);border:1px solid var(--green)}
+.note{font-size:10.5px;color:var(--muted);line-height:1.4;padding:0 14px 12px}
+.collapse{margin-left:auto;background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:800;font-size:14px;padding:2px 9px}
+.leaflet-popup-content-wrapper{border-radius:12px}
+.leaflet-popup-content{margin:12px 14px;font-family:Inter,system-ui,sans-serif}
+.pop-t{font-weight:800;font-size:14px;margin-bottom:3px;color:#17311b}
+.pop-d{font-size:12.5px;color:#374151;line-height:1.45}
+.pop-l{display:inline-block;margin-top:9px;background:#eef4fb;color:#1155cc;font-weight:700;font-size:12px;
+  text-decoration:none;padding:6px 11px;border-radius:8px}
+.pill-tag{display:inline-block;font-size:10px;font-weight:800;color:#fff;padding:2px 7px;border-radius:20px;margin-bottom:5px;letter-spacing:.3px}
+body.folded #panel .p-body,body.folded #panel .p-foot,body.folded #panel .note{display:none}
+@media(max-width:560px){#panel{width:calc(100vw - 20px);left:10px;top:10px;max-height:52vh}}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="panel">
+  <div class="p-head">
+    <h1>🚴 Roquecor Cycling Week — area map <button class="collapse" id="fold" title="Collapse">–</button></h1>
+    <p>Everything within reach of the base: Tour de France roads, the iconic climbs, and useful stops. Tap a layer to show or hide it, tap a pin for details.</p>
+  </div>
+  <div class="p-body" id="legend"></div>
+  <div class="p-foot">
+    <button class="b green" id="fitBtn">Fit everything</button>
+    <button class="b ghost" id="homeBtn">Back to Roquecor</button>
+  </div>
+  <div class="note">Pins sit at village / venue level and are approximate; the Tour de France lines are indicative corridors near Roquecor, not exact GPS tracks. Prices are researched estimates, confirm before booking.</div>
+</div>
+
+<script>
+const CATS = {
+  base: {label:"Base",                    color:"#1B5E20", glyph:"🏠"},
+  tdf:  {label:"Tour de France",          color:"#F2B705", glyph:"🚴"},
+  climb:{label:"Iconic climbs",           color:"#E8543B", glyph:"⛰️"},
+  route:{label:"Camp route starts",       color:"#2E7D32", glyph:"🚩"},
+  shop: {label:"Bike shops / mechanics",  color:"#2563eb", glyph:"🔧"},
+  cafe: {label:"Cafés, villages & water", color:"#8a5a2b", glyph:"☕"},
+  wine: {label:"Wine (Malbec) stops",     color:"#7c3aed", glyph:"🍇"},
+  exp:  {label:"Kayak & food experiences",color:"#0d9488", glyph:"🛶"},
+  bed:  {label:"Lodging options",         color:"#64748b", glyph:"🛏️"},
+  air:  {label:"Airports",                color:"#475569", glyph:"✈️"},
+};
+
+const POIS = [
+  // base
+  {c:"base",n:"Roquecor (base)",lat:44.3228,lon:0.9442,d:"Home base. Peter & Florence's house; the whole week radiates from here."},
+  {c:"base",n:"Touffailles (alt base, pool)",lat:44.2953,lon:0.9836,d:"Second possible base with a pool, ~10 min from Roquecor."},
+  // tour de france
+  {c:"tdf",n:"Lauzerte (2022 Tour)",lat:44.2636,lon:1.1386,d:"2022 Stage 19 climbed the cobbled Côte de Lauzerte here (2 km @ 6.2%). Closest the Tour has come to Roquecor, ~15 km."},
+  {c:"tdf",n:"Montcuq (2022 Tour)",lat:44.3339,lon:1.2064,d:"2022 Stage 19 rolled through the Quercy Blanc here on the way to Cahors."},
+  {c:"tdf",n:"Valence d'Agen (2022 Tour)",lat:44.1069,lon:0.8853,d:"2022 Stage 19 crossed the Garonne near here (by the bastide of Auvillar)."},
+  {c:"tdf",n:"Cahors (2022 finish)",lat:44.4478,lon:1.4415,d:"Finish of 2022 Stage 19, won by Christophe Laporte."},
+  {c:"tdf",n:"Fumel (2024 Tour)",lat:44.4984,lon:0.9704,d:"2024 Stage 12 ran down the Lot valley through Fumel toward the finish."},
+  {c:"tdf",n:"Villeneuve-sur-Lot (2024 finish)",lat:44.4081,lon:0.7075,d:"Finish of 2024 Stage 12, won by Biniam Girmay."},
+  {c:"tdf",n:"Agen (2024 start)",lat:44.2032,lon:0.6161,d:"Start of 2024 Stage 13 (Agen → Pau)."},
+  {c:"tdf",n:"Castelsarrasin (2007 finish)",lat:44.0407,lon:1.1069,d:"Finish of 2007 Stage 17; Alberto Contador took the yellow jersey here."},
+  {c:"tdf",n:"Montpezat-de-Quercy (2012 Tour)",lat:44.2419,lon:1.4783,d:"2012 Stage 18 threaded the Bas-Quercy near here (sprint in Cahors)."},
+  // climbs
+  {c:"climb",n:"Côte de Lauzerte",lat:44.2585,lon:1.1300,d:"2 km @ 6.2%, four cobbled hairpins, Cat 4. The camp's signature climb, straight from the 2022 Tour."},
+  {c:"climb",n:"Côte de Saint-Daunès",lat:44.3530,lon:1.1330,d:"1.6 km @ 6.3% (2022 Tour). A quiet Quercy Blanc ramp."},
+  {c:"climb",n:"Bélaye viewpoint",lat:44.4783,lon:1.1889,d:"Short ~8% ramp to a clifftop viewpoint over the Lot (on the queen loop)."},
+  {c:"climb",n:"Penne-d'Agenais",lat:44.3789,lon:0.8203,d:"Ramp to the hilltop basilica pitches up to ~14%. Huge views over the Lot valley."},
+  // route hubs
+  {c:"route",n:"Lauzerte — Day-1 shakeout loops",lat:44.2690,lon:1.1470,d:"Start for the 50 km Castelsagrat and 44 km Montcuq easy loops.",u:"https://www.komoot.com/guide/1267628/cycling-around-lauzerte",ut:"Routes on Komoot"},
+  {c:"route",n:"Montaigu-de-Quercy — official 32 km circuit",lat:44.3736,lon:1.0086,d:"The closest ride to the house; official tourism-office road circuit.",u:"https://www.calculitineraires.fr/index.php?id=582670",ut:"Circuit details"},
+  {c:"route",n:"Anthé — Day-2 rolling loop",lat:44.3506,lon:0.8631,d:"67 km / 900 m all-paved Quercy Blanc loop; extend toward Tournon for 75-80 km.",u:"https://www.komoot.com/guide/1372636/road-cycling-routes-around-montaigu-de-quercy",ut:"Routes on Komoot"},
+  {c:"route",n:"Prayssac — Day-3 vineyard loop",lat:44.5069,lon:1.1953,d:"68 km / 660 m through Cahors Malbec country and the Lot meanders.",u:"https://www.komoot.com/smarttour/35655697",ut:"Route on Komoot"},
+  {c:"route",n:"Monsempron-Libos — Day-4 queen & Bonaguil",lat:44.4936,lon:0.9847,d:"Start for the 90 km Agenais queen loop (Bélaye, Tournon, Penne) and the Bonaguil castles loop.",u:"https://www.komoot.com/smarttour/e945709736",ut:"Route on Komoot"},
+  {c:"route",n:"Canal de Garonne — flat / hot-day",lat:44.1140,lon:0.8770,d:"Traffic-free shaded towpath, Valence d'Agen to Moissac. The canicule or recovery option.",u:"https://en.canaldes2mersavelo.com/cycle-route/valence-d-agen-moissac",ut:"Greenway details"},
+  // bike shops
+  {c:"shop",n:"Cycles Lamiche — Villeneuve-sur-Lot",lat:44.4130,lon:0.7110,d:"Best-equipped road workshop nearby. Book a group service ahead. ~30 min.",u:"https://www.cycles-lamiche.fr/",ut:"Website"},
+  {c:"shop",n:"Cycles Soulier — Fumel",lat:44.4960,lon:0.9770,d:"Closest workshop to Roquecor for quick fixes. ~30 min.",u:"https://www.pagesjaunes.fr/annuaire/fumel-47/velos-cycles-commerce-reparation",ut:"Listing"},
+  {c:"shop",n:"Veloclic — Cahors",lat:44.4520,lon:1.4360,d:"Bigger road / e-bike workshop for anything serious. ~50 min.",u:"https://www.veloclic.com/",ut:"Website"},
+  {c:"shop",n:"Culture Vélo — Agen",lat:44.2080,lon:0.6210,d:"Full sales & repair; may rent road bikes (call to confirm). ~40 min.",u:"https://www.culturevelo.com/-Agen-",ut:"Website"},
+  {c:"shop",n:"Cycles Feutrier — Valence d'Agen",lat:44.1120,lon:0.8910,d:"Sales & repair since 1996; handy near the canal. ~40 min.",u:"https://cycles-feutrier.fr/",ut:"Website"},
+  // cafes / villages / water
+  {c:"cafe",n:"Tournon-d'Agenais",lat:44.3050,lon:0.8161,d:"Hilltop bastide (plus beau village), café on the square, water fountain. ~12 min."},
+  {c:"cafe",n:"Bourg-de-Visa",lat:44.2725,lon:0.9931,d:"Arcaded square and fountain, ~12 min. Ferme-auberge close by."},
+  {c:"cafe",n:"Montaigu-de-Quercy",lat:44.3700,lon:1.0150,d:"Village + emerald lake; Librairie Café (coffee & cookies), Sat market, water."},
+  {c:"cafe",n:"Montcuq",lat:44.3300,lon:1.2120,d:"Medieval hill-town, Sunday market, cafés and a fountain."},
+  {c:"cafe",n:"Puy-l'Évêque",lat:44.5019,lon:1.1361,d:"Cliffside Lot village; cafés, a panorama over the vineyards, and water."},
+  {c:"cafe",n:"Pujols",lat:44.3906,lon:0.6836,d:"Plus beau village above Villeneuve; café and long views."},
+  {c:"cafe",n:"Auvillar",lat:44.0678,lon:0.8919,d:"Plus beau village with a circular market hall; coffee ~5 km off the canal."},
+  // wine
+  {c:"wine",n:"Château du Cèdre — Vire-sur-Lot",lat:44.5086,lon:1.0947,d:"Organic Cahors reference estate; cellar tour + tasting from €15. ~45 min.",u:"https://www.chateauducedre.com/",ut:"Website"},
+  {c:"wine",n:"Château de Haute-Serre — Cieurac",lat:44.3600,lon:1.4700,d:"Malbec tour + tasting €10-25, with an on-site restaurant for lunch. ~1h.",u:"https://hauteserre.fr/",ut:"Website"},
+  {c:"wine",n:"Château de Mercuès",lat:44.4919,lon:1.3592,d:"13th-century castle over the Lot; cellar tour + tasting €15-27. ~50 min.",u:"https://chateaudemercues.com/",ut:"Website"},
+  {c:"wine",n:"Vignerons du Quercy — Montpezat",lat:44.2470,lon:1.4680,d:"Closest wine: Coteaux du Quercy co-op, guided tasting ~€6-8. ~35-40 min.",u:"http://www.les-vignerons-du-quercy.com/",ut:"Website"},
+  // experiences
+  {c:"exp",n:"Copeyre kayak — Puy-l'Évêque",lat:44.4995,lon:1.1420,d:"Canoe/kayak on the Lot past cliffs and châteaux, shuttle included. ~€22-26 pp, ~40 min.",u:"https://www.copeyre.com/location-bateau-puy-l-eveque.html",ut:"Website"},
+  {c:"exp",n:"Kalapca kayak — Bouziès / St-Cirq",lat:44.4783,lon:1.6183,d:"Paddle under Saint-Cirq-Lapopie; 4-22 km, €12-29 pp. The postcard day (~1h30).",u:"https://www.kalapca.com/",ut:"Website"},
+  {c:"exp",n:"Ferme-Auberge de Lasbourdettes — Bourg-de-Visa",lat:44.2670,lon:0.9990,d:"Classic Quercy farm feast (duck, foie gras), groups to 20, €22-38. ~12 min.",u:"http://www.gite-lasbourdettes.com/",ut:"Website"},
+  {c:"exp",n:"Saint-Cirq-Lapopie",lat:44.4667,lon:1.6717,d:"One of France's most beautiful villages, perched over the Lot. The kayak scene."},
+  // lodging
+  {c:"bed",n:"Gîtes Grand Pré — Roquecor",lat:44.3180,lon:0.9500,d:"In the village: up to 23 across separate units, pool, 300 m² barn for bikes. €4,490-4,990/wk.",u:"https://www.gites-grandpre.com/",ut:"Website"},
+  {c:"bed",n:"Gîte de l'ébéniste — Sauveterre-la-Lémance",lat:44.5936,lon:1.0269,d:"Sleeps 10-14, private pool, all-in pricing €2,650/wk (value pick). ~30 min.",u:"https://www.gite-ebeniste-perigord.fr/",ut:"Website"},
+  {c:"bed",n:"Vieux Mirou (2 gîtes) — Valeilles",lat:44.3300,lon:0.9000,d:"Two adjoining gîtes, two pools, ~8 min from Roquecor. €3,514-4,717/wk for both.",u:"https://www.gites.co.uk/2-large-gites-with-2-private-pools-sleeps-20/l.1423",ut:"Listing"},
+  // airports
+  {c:"air",n:"Toulouse-Blagnac (TLS)",lat:43.6293,lon:1.3680,d:"~1h15 drive. Best connections; US guests route via a European hub."},
+  {c:"air",n:"Bergerac (EGC)",lat:44.8256,lon:0.5186,d:"~1h drive. Cheap direct UK (Ryanair, Jet2), summer only."},
+  {c:"air",n:"Agen (AGF)",lat:44.1747,lon:0.5906,d:"~40 min. Domestic only (Paris-Orly) — confirm it's running for 2027."},
+];
+
+// approximate TdF corridors near Roquecor (indicative, not GPS)
+const CORRIDORS = [
+  {name:"2022 Stage 19 (approx corridor)", pts:[[44.1069,0.8853],[44.2830,1.0480],[44.2636,1.1386],[44.3339,1.2064],[44.4478,1.4415]]},
+  {name:"2024 Stage 12 (Lot-valley run-in, approx)", pts:[[44.5019,1.1361],[44.5100,1.0800],[44.4984,0.9704],[44.4200,0.7900],[44.4081,0.7075]]},
+];
+
+const map = L.map('map',{zoomControl:false,scrollWheelZoom:true}).setView([44.36,1.02],10);
+L.control.zoom({position:'topright'}).addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+  {subdomains:'abcd',maxZoom:19,attribution:'&copy; OpenStreetMap &copy; CARTO'}).addTo(map);
+
+function mkIcon(cat){
+  return L.divIcon({className:'',iconSize:[30,30],iconAnchor:[15,28],popupAnchor:[0,-26],
+    html:`<div class="mk" style="background:${cat.color}"><span>${cat.glyph}</span></div>`});
+}
+function popupHtml(p,cat){
+  return `<div><span class="pill-tag" style="background:${cat.color}">${cat.label}</span>`+
+    `<div class="pop-t">${p.n}</div><div class="pop-d">${p.d}</div>`+
+    (p.u?`<a class="pop-l" href="${p.u}" target="_blank" rel="noopener">${p.ut||'Open link'} ↗</a>`:``)+`</div>`;
+}
+
+const groups={}, counts={};
+Object.keys(CATS).forEach(k=>{groups[k]=L.layerGroup(); counts[k]=0;});
+const allLatLng=[];
+POIS.forEach(p=>{
+  const cat=CATS[p.c]; if(!cat) return;
+  const m=L.marker([p.lat,p.lon],{icon:mkIcon(cat)}).bindPopup(popupHtml(p,cat),{maxWidth:260});
+  m.addTo(groups[p.c]); counts[p.c]++; allLatLng.push([p.lat,p.lon]);
+});
+// corridors go into the tdf group
+CORRIDORS.forEach(r=>{
+  L.polyline(r.pts,{color:CATS.tdf.color,weight:4,opacity:.85,dashArray:'2,9',lineCap:'round'})
+    .bindPopup(`<div class="pop-t">${r.name}</div><div class="pop-d">Indicative Tour de France corridor near Roquecor, not an exact GPS track.</div>`)
+    .addTo(groups.tdf);
+});
+Object.keys(groups).forEach(k=>groups[k].addTo(map));
+
+// legend / toggles
+const legend=document.getElementById('legend');
+Object.keys(CATS).forEach(k=>{
+  const cat=CATS[k];
+  const row=document.createElement('label'); row.className='legrow'; row.dataset.k=k;
+  row.innerHTML=`<input type="checkbox" checked/><span class="dot" style="background:${cat.color}">${cat.glyph}</span>`+
+    `<span class="nm">${cat.label}</span><span class="ct">${counts[k]}</span>`;
+  row.addEventListener('click',e=>{
+    e.preventDefault();
+    const on=map.hasLayer(groups[k]);
+    if(on){map.removeLayer(groups[k]); row.classList.add('off'); row.querySelector('input').checked=false;}
+    else{groups[k].addTo(map); row.classList.remove('off'); row.querySelector('input').checked=true;}
+  });
+  legend.appendChild(row);
+});
+
+const bounds=L.latLngBounds(allLatLng);
+function fitAll(){ map.fitBounds(bounds,{padding:[60,60]}); }
+fitAll();
+document.getElementById('fitBtn').addEventListener('click',fitAll);
+document.getElementById('homeBtn').addEventListener('click',()=>map.flyTo([44.3228,0.9442],12,{duration:.8}));
+document.getElementById('fold').addEventListener('click',e=>{
+  document.body.classList.toggle('folded');
+  e.target.textContent=document.body.classList.contains('folded')?'+':'–';
+  e.stopPropagation();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Roquecor Cycling Week — Project Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green:#1B5E20; --green2:#2E7D32; --bg:#eef1ea; --card:#ffffff; --ink:#1c2420; --muted:#6b7280;
+  --line:#e4e7e0; --todo:#9aa0a6; --doing:#e0912f; --done:#2E7D32; --parked:#64748b;
+  --liv:#0e7c86; --peter:#2563eb; --both:#7c3aed;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--ink);
+  background:linear-gradient(180deg,#f3f5ef,#e9ede4);min-height:100vh}
+a{color:#1155cc}
+header{background:linear-gradient(120deg,#17491d,#1B5E20 55%,#2E7D32);color:#fff;padding:22px 26px 20px;
+  box-shadow:0 6px 22px rgba(20,50,25,.18)}
+.h-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.badge-emoji{font-size:26px}
+h1{font-size:22px;font-weight:800;margin:0;letter-spacing:-.2px}
+.sub{color:#d6e6d8;font-size:13px;margin-top:2px}
+.progress-wrap{margin-top:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.bar{flex:1;min-width:220px;height:12px;background:rgba(255,255,255,.22);border-radius:20px;overflow:hidden}
+.bar > i{display:block;height:100%;width:0;background:linear-gradient(90deg,#a7e8b0,#ffd76a);border-radius:20px;transition:width .5s ease}
+.pct{font-weight:800;font-size:15px;min-width:44px}
+.counts{display:flex;gap:8px;flex-wrap:wrap}
+.chip{background:rgba(255,255,255,.14);padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.chip b{font-weight:800}
+.toolbar{position:sticky;top:0;z-index:20;background:rgba(245,247,242,.92);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);padding:12px 20px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.toolbar .grp{display:flex;gap:6px;align-items:center}
+label.lbl{font-size:12px;color:var(--muted);font-weight:600}
+select,input[type=text]{font-family:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--line);
+  border-radius:9px;background:#fff;color:var(--ink)}
+input[type=text]{min-width:150px}
+button{font-family:inherit;cursor:pointer;border:none;border-radius:9px;font-weight:600}
+.btn{background:var(--green);color:#fff;padding:8px 14px;font-size:13px}
+.btn.ghost{background:#fff;color:var(--green);border:1px solid var(--green)}
+.btn.mini{padding:6px 10px;font-size:12px}
+.spacer{flex:1}
+main{max-width:1180px;margin:22px auto 80px;padding:0 18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;align-items:start}
+.cat{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(30,50,30,.05)}
+.cat h2{margin:0;padding:13px 16px;font-size:15px;font-weight:700;display:flex;align-items:center;gap:9px;
+  border-bottom:1px solid var(--line);background:#fafbf8}
+.cat h2 .mini-prog{margin-left:auto;font-size:11px;font-weight:700;color:var(--muted);
+  background:#eef2ea;padding:3px 9px;border-radius:20px}
+.tasklist{padding:8px}
+.task{border:1px solid var(--line);border-radius:12px;padding:10px 11px;margin:7px 0;background:#fff;transition:.15s}
+.task:hover{border-color:#cdd6c8;box-shadow:0 3px 10px rgba(30,50,30,.06)}
+.task.done{background:#f4faf4}
+.task-top{display:flex;align-items:flex-start;gap:9px}
+.pill{border:none;color:#fff;font-size:11px;font-weight:700;padding:5px 9px;border-radius:20px;white-space:nowrap;min-width:64px;text-align:center}
+.pill.todo{background:var(--todo)} .pill.doing{background:var(--doing)} .pill.done{background:var(--done)} .pill.parked{background:var(--parked)}
+.title{flex:1;font-size:13.5px;font-weight:600;line-height:1.35;outline:none}
+.title.done{text-decoration:line-through;color:var(--muted);text-decoration-thickness:1.5px}
+.owner{font-size:10.5px;font-weight:800;color:#fff;padding:4px 8px;border-radius:20px;cursor:pointer;white-space:nowrap}
+.owner.Liv{background:var(--liv)} .owner.Peter{background:var(--peter)} .owner.Both{background:var(--both)}
+.del{background:transparent;color:#c0392b;font-size:15px;line-height:1;padding:2px 5px;opacity:.35}
+.del:hover{opacity:1}
+.task-bottom{display:flex;align-items:center;gap:8px;margin-top:8px}
+.note{flex:1;font-size:12px;padding:6px 9px;border:1px dashed var(--line);border-radius:8px;background:#fbfcfa;color:#374151}
+.note:focus{border-style:solid;border-color:var(--green2);background:#fff;outline:none}
+.link-chip{font-size:11px;font-weight:700;text-decoration:none;background:#eef4fb;color:#1155cc;padding:5px 9px;border-radius:8px;white-space:nowrap}
+.hintbar{max-width:1180px;margin:0 auto;padding:6px 20px 0;color:var(--muted);font-size:12px}
+footer{max-width:1180px;margin:0 auto;padding:24px 20px 60px;color:var(--muted);font-size:12px;line-height:1.6}
+@media(max-width:520px){ h1{font-size:19px} .toolbar{gap:8px} input[type=text]{min-width:120px} }
+</style>
+</head>
+<body>
+<header>
+  <div class="h-top">
+    <span class="badge-emoji">🚴</span>
+    <div>
+      <h1>Roquecor Cycling Week — Project Tracker</h1>
+      <div class="sub">Pilot 2027 · everything to figure out, in one place. Click a status to advance it. Your changes save in this browser.</div>
+    </div>
+  </div>
+  <div class="progress-wrap">
+    <div class="pct" id="pct">0%</div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="counts" id="counts"></div>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="grp"><label class="lbl">Owner</label>
+    <select id="fOwner"><option value="all">All</option><option>Liv</option><option>Peter</option><option>Both</option></select></div>
+  <div class="grp"><label class="lbl">Status</label>
+    <select id="fStatus"><option value="all">All</option><option value="todo">To do</option><option value="doing">In progress</option><option value="done">Done</option><option value="parked">Parked</option></select></div>
+  <div class="grp"><input type="text" id="search" placeholder="Search tasks…"/></div>
+  <div class="spacer"></div>
+  <div class="grp">
+    <input type="text" id="newTitle" placeholder="New task…"/>
+    <select id="newCat"></select>
+    <select id="newOwner"><option>Liv</option><option>Peter</option><option>Both</option></select>
+    <button class="btn mini" id="addBtn">+ Add</button>
+  </div>
+  <button class="btn ghost mini" id="resetBtn" title="Restore the original task list">Reset</button>
+</div>
+<div class="hintbar">Tip: click the coloured status pill to cycle To&nbsp;do → In&nbsp;progress → Done → Parked. Click an owner tag to reassign. Click a task title to edit it.</div>
+
+<main id="board"></main>
+
+<footer id="foot"></footer>
+
+<script>
+const CATS = [
+  {id:"concept",   name:"Concept & positioning", icon:"🧭"},
+  {id:"routes",    name:"Riding & routes",        icon:"🗺️"},
+  {id:"bikes",     name:"Bikes",                  icon:"🚲"},
+  {id:"food",      name:"Food & the cooking",     icon:"🍽️"},
+  {id:"beds",      name:"Beds",                   icon:"🛏️"},
+  {id:"vehicle",   name:"Support vehicle",        icon:"🚐"},
+  {id:"travel",    name:"Getting there",          icon:"✈️"},
+  {id:"exp",       name:"Experiences",            icon:"🛶"},
+  {id:"mech",      name:"Mechanic & support",     icon:"🔧"},
+  {id:"money",     name:"Money & price",          icon:"💶"},
+  {id:"dates",     name:"Dates",                  icon:"📅"},
+  {id:"guests",    name:"Guests & booking",       icon:"👥"},
+  {id:"admin",     name:"Admin & safety",         icon:"🛟"},
+];
+
+const SEED = [
+  ["concept","Nail the promise & positioning (quiet roads, humane, not a sufferfest)","Both","done",""],
+  ["concept","Confirm format: 5 nights / 4 riding days, 8-10 riders","Both","done",""],
+  ["concept","Pick a working name (Quercy / Roquecor / SW France Cycling Week)","Both","todo",""],
+  ["routes","Finalise the 4 curated routes from the menu","Liv","doing","Easy → rolling → cafe/vineyard → gentle queen"],
+  ["routes","Build A/B short options for heat or jet lag","Liv","todo",""],
+  ["routes","Lock the signature climb (Cote de Lauzerte)","Liv","done","2 km @ 6.2%, from the 2022 Tour"],
+  ["routes","Recon the routes on the ground next summer","Both","todo",""],
+  ["bikes","Decide: hire bikes vs bring-your-own","Both","todo","Biggest single price lever"],
+  ["bikes","Group + delivery quote from Velo du Lot","Liv","todo","https://velodulot.com/"],
+  ["bikes","Backup quote from O2 Cycles (Bordeaux)","Liv","todo","https://www.o2cycles.com/en/rates/"],
+  ["food","Decide dinners model (chef / traiteur / restaurant mix)","Both","todo","Florence isn't cooking"],
+  ["food","Quote from Take a Chef (5 dinners, meat-friendly, 7-12)","Liv","todo","https://www.takeachef.com/en-fr/private-chef/tarn-et-garonne"],
+  ["food","Quote from Somi (independent chef, fixed tiers)","Liv","todo","https://www.cheffe-somi.fr/menus-tarifs-chef-a-domicile"],
+  ["food","Sort breakfast + ride-lunch provisioning (boulangerie + markets)","Both","todo",""],
+  ["food","Book a farewell restaurant (L'Etincelle / Le Bellevue)","Liv","todo",""],
+  ["beds","Confirm the houses sleep 10-12 + lockable bike storage","Peter","todo",""],
+  ["beds","Hold a large gite as overflow (Gites Grand Pre, in Roquecor)","Both","todo","https://www.gites-grandpre.com/"],
+  ["vehicle","Book 9-seat minibus + cargo van (Agen branch)","Peter","todo","https://www.ada.fr/location-voiture-agen"],
+  ["vehicle","Decide who drives support on ride days","Peter","todo","Probably not Peter every day"],
+  ["travel","Recommend airports to guests (Toulouse / Bergerac)","Liv","done",""],
+  ["travel","Decide transfer model (keep as guest-paid add-on)","Both","todo",""],
+  ["exp","Pick the 1-2 highlight experiences","Both","todo","Kayak + a wine/farm afternoon"],
+  ["exp","Book a kayak day (Copeyre Puy-l'Eveque / Kalapca)","Liv","todo","https://www.copeyre.com/location-bateau-puy-l-eveque.html"],
+  ["exp","Book a Malbec tasting (Chateau du Cedre / Haute-Serre)","Liv","todo","https://www.chateauducedre.com/"],
+  ["mech","Line up on-call mechanic (Cycles Lamiche / Soulier)","Liv","todo","https://www.cycles-lamiche.fr/"],
+  ["mech","Book a pre-camp group bike service","Liv","todo",""],
+  ["money","Set the price & what's included (target 1,650 pp)","Both","todo",""],
+  ["money","Turn quote bands into firm numbers","Liv","doing","See the decisions & options doc"],
+  ["dates","Get Peter's availability window for 2027","Peter","todo","Everything keys off this"],
+  ["dates","Lock the week (dodge the worst August heat)","Both","todo",""],
+  ["guests","Draft the first invite list (8-10 friendly riders)","Both","todo",""],
+  ["guests","Write the pitch / invitation","Liv","todo",""],
+  ["guests","Collect deposits & confirm bookings","Both","todo",""],
+  ["admin","Require guests carry travel insurance","Liv","todo",""],
+  ["admin","First-aid kit + simple emergency plan","Peter","todo",""],
+  ["admin","Confirm secure bike storage at the base","Peter","todo",""],
+];
+
+const KEY="roquecor_tracker_v1";
+const STORDER=["todo","doing","done","parked"];
+const STLABEL={todo:"To do",doing:"In progress",done:"Done",parked:"Parked"};
+const OWORDER=["Liv","Peter","Both"];
+let tasks=load();
+
+function seed(){ return SEED.map((r,i)=>({id:"t"+i+"_"+Math.random().toString(36).slice(2,7),cat:r[0],title:r[1],owner:r[2],status:r[3],note:r[4]||""})); }
+function load(){ try{const s=localStorage.getItem(KEY); if(s){const a=JSON.parse(s); if(Array.isArray(a)&&a.length) return a;}}catch(e){} return seed(); }
+function save(){ try{localStorage.setItem(KEY,JSON.stringify(tasks));}catch(e){} }
+
+const $=s=>document.querySelector(s);
+const board=$("#board");
+
+// populate add-category select
+CATS.forEach(c=>{const o=document.createElement("option");o.value=c.id;o.textContent=c.icon+" "+c.name;$("#newCat").appendChild(o);});
+
+function filtered(){
+  const fo=$("#fOwner").value, fs=$("#fStatus").value, q=$("#search").value.trim().toLowerCase();
+  return tasks.filter(t=>(fo==="all"||t.owner===fo)&&(fs==="all"||t.status===fs)&&(!q||(t.title+" "+t.note).toLowerCase().includes(q)));
+}
+
+function render(){
+  // progress from ALL tasks
+  const total=tasks.length, done=tasks.filter(t=>t.status==="done").length;
+  const pct=total?Math.round(done/total*100):0;
+  $("#pct").textContent=pct+"%"; $("#barfill").style.width=pct+"%";
+  const c={todo:0,doing:0,done:0,parked:0}; tasks.forEach(t=>c[t.status]++);
+  $("#counts").innerHTML=`<span class="chip"><b>${c.todo}</b> to do</span><span class="chip"><b>${c.doing}</b> in progress</span><span class="chip"><b>${c.done}</b> done</span><span class="chip"><b>${c.parked}</b> parked</span>`;
+
+  const list=filtered();
+  board.innerHTML="";
+  CATS.forEach(cat=>{
+    const items=list.filter(t=>t.cat===cat.id);
+    if(!items.length) return;
+    const allInCat=tasks.filter(t=>t.cat===cat.id);
+    const d=allInCat.filter(t=>t.status==="done").length;
+    const sec=document.createElement("section"); sec.className="cat";
+    sec.innerHTML=`<h2><span>${cat.icon}</span> ${cat.name}<span class="mini-prog">${d}/${allInCat.length}</span></h2>`;
+    const wrap=document.createElement("div"); wrap.className="tasklist";
+    items.forEach(t=>wrap.appendChild(card(t)));
+    sec.appendChild(wrap); board.appendChild(sec);
+  });
+  if(!list.length){ board.innerHTML=`<div style="grid-column:1/-1;text-align:center;color:#6b7280;padding:40px">No tasks match these filters.</div>`; }
+  save();
+}
+
+function card(t){
+  const el=document.createElement("div"); el.className="task"+(t.status==="done"?" done":"");
+  const link=t.note&&/^https?:\/\//.test(t.note);
+  el.innerHTML=`
+    <div class="task-top">
+      <button class="pill ${t.status}" data-act="status">${STLABEL[t.status]}</button>
+      <div class="title ${t.status==="done"?"done":""}" contenteditable="true" spellcheck="false" data-act="title">${escapeHtml(t.title)}</div>
+      <span class="owner ${t.owner}" data-act="owner" title="Click to reassign">${t.owner}</span>
+      <button class="del" data-act="del" title="Delete">×</button>
+    </div>
+    <div class="task-bottom">
+      ${link?"":`<input class="note" data-act="note" placeholder="Add a note…" value="${escapeAttr(t.note)}"/>`}
+      ${link?`<a class="link-chip" href="${escapeAttr(t.note)}" target="_blank" rel="noopener">Open link ↗</a><input class="note" data-act="note" placeholder="Add a note…" value="" style="display:none"/>`:""}
+    </div>`;
+  el.dataset.id=t.id;
+  return el;
+}
+
+function escapeHtml(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));}
+function escapeAttr(s){return (s||"").replace(/"/g,"&quot;").replace(/</g,"&lt;");}
+
+board.addEventListener("click",e=>{
+  const act=e.target.dataset.act; if(!act) return;
+  const id=e.target.closest(".task").dataset.id; const t=tasks.find(x=>x.id===id); if(!t) return;
+  if(act==="status"){ t.status=STORDER[(STORDER.indexOf(t.status)+1)%STORDER.length]; render(); }
+  else if(act==="owner"){ t.owner=OWORDER[(OWORDER.indexOf(t.owner)+1)%OWORDER.length]; render(); }
+  else if(act==="del"){ tasks=tasks.filter(x=>x.id!==id); render(); }
+});
+board.addEventListener("input",e=>{
+  const act=e.target.dataset.act; if(act!=="note") return;
+  const id=e.target.closest(".task").dataset.id; const t=tasks.find(x=>x.id===id); if(t){ t.note=e.target.value; save(); }
+});
+board.addEventListener("blur",e=>{
+  if(e.target.dataset.act!=="title") return;
+  const id=e.target.closest(".task").dataset.id; const t=tasks.find(x=>x.id===id);
+  if(t){ t.title=e.target.textContent.trim()||t.title; save(); }
+},true);
+
+["#fOwner","#fStatus"].forEach(s=>$(s).addEventListener("change",render));
+$("#search").addEventListener("input",render);
+$("#addBtn").addEventListener("click",()=>{
+  const title=$("#newTitle").value.trim(); if(!title) return;
+  tasks.unshift({id:"u"+Math.random().toString(36).slice(2,8),cat:$("#newCat").value,title,owner:$("#newOwner").value,status:"todo",note:""});
+  $("#newTitle").value=""; render();
+});
+$("#newTitle").addEventListener("keydown",e=>{ if(e.key==="Enter") $("#addBtn").click(); });
+$("#resetBtn").addEventListener("click",()=>{ if(confirm("Restore the original task list? Your edits and added tasks will be cleared.")){ tasks=seed(); render(); }});
+
+$("#foot").innerHTML="Saved locally in this browser (nothing leaves your computer). Reopen this file any time to pick up where you left off. Built from the camp concept and the decisions &amp; options guide.";
+render();
+</script>
+</body>
+</html>
