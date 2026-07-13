@@ -8,42 +8,65 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--green:#1B5E20;--ink:#1c2420;--muted:#6b7280;--line:#e4e7e0}
+:root{--green:#1B5E20;--ink:#1c2420;--muted:#6b7280;--line:#e4e7e0;--red:#E8140A}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;color:var(--ink)}
 #map{position:absolute;inset:0;background:#e9ede4}
 .mk{width:30px;height:30px;border-radius:50% 50% 50% 2px;transform:rotate(45deg);display:flex;align-items:center;justify-content:center;
   border:2px solid #fff;box-shadow:0 2px 7px rgba(0,0,0,.35)}
 .mk > span{transform:rotate(-45deg);font-size:15px;line-height:1}
-#panel{position:absolute;top:14px;left:14px;z-index:1000;width:326px;max-width:calc(100vw - 28px);
+#panel{position:absolute;top:14px;left:14px;z-index:1000;width:338px;max-width:calc(100vw - 28px);
   background:rgba(255,255,255,.97);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 34px rgba(20,40,20,.22);
   max-height:calc(100vh - 28px);display:flex;flex-direction:column;overflow:hidden}
-.p-head{background:linear-gradient(120deg,#17491d,#1B5E20 60%,#2E7D32);color:#fff;padding:15px 16px}
-.p-head h1{font-size:17px;font-weight:800;margin:0;display:flex;align-items:center;gap:8px}
+.p-head{background:linear-gradient(120deg,#17491d,#1B5E20 60%,#2E7D32);color:#fff;padding:14px 16px}
+.p-head h1{font-size:16px;font-weight:800;margin:0;display:flex;align-items:center;gap:8px}
 .p-head p{margin:6px 0 0;font-size:12px;color:#dcebdd;line-height:1.45}
-.p-body{padding:10px 14px 6px;overflow:auto}
+.collapse{margin-left:auto;background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:800;font-size:14px;padding:2px 9px}
+.tabs{display:flex;gap:4px;padding:8px 10px 0;background:#f4f6f1}
+.tab{flex:1;background:#e7ece3;color:#33413a;border:none;border-radius:9px 9px 0 0;padding:8px;font-weight:700;font-size:12.5px;cursor:pointer}
+.tab.active{background:#fff;color:var(--green);box-shadow:inset 0 -2px 0 var(--green)}
+.p-body{padding:10px 14px 8px;overflow:auto}
 .legrow{display:flex;align-items:center;gap:9px;padding:7px 6px;border-radius:9px;cursor:pointer;user-select:none}
 .legrow:hover{background:#f2f5ef}
-.legrow input{display:none}
 .dot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex:0 0 auto;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.25)}
 .legrow .nm{font-size:13px;font-weight:600;flex:1}
 .legrow .ct{font-size:11px;font-weight:700;color:var(--muted);background:#eef2ea;border-radius:20px;padding:2px 8px}
 .legrow.off{opacity:.4}
 .legrow.off .nm{text-decoration:line-through}
-.p-foot{border-top:1px solid var(--line);padding:10px 14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.p-foot-inline{display:flex;gap:8px;flex-wrap:wrap;padding:10px 4px 2px}
 .b{font-family:inherit;cursor:pointer;border:none;border-radius:9px;font-weight:700;font-size:12px;padding:8px 11px}
 .b.green{background:var(--green);color:#fff}.b.ghost{background:#fff;color:var(--green);border:1px solid var(--green)}
-.note{font-size:10.5px;color:var(--muted);line-height:1.4;padding:0 14px 12px}
-.collapse{margin-left:auto;background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:800;font-size:14px;padding:2px 9px}
+.showall{width:100%;background:var(--green);color:#fff;border:none;border-radius:10px;padding:9px;font-weight:700;font-size:12.5px;cursor:pointer;margin:2px 0 6px}
+.showall.dim{background:#eef2ea;color:#33413a}
+.rcard{display:block;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:11px;padding:9px 11px;margin:7px 0;cursor:pointer;transition:.15s}
+.rcard:hover{border-color:#e6b7b0;box-shadow:0 3px 10px rgba(30,50,30,.06)}
+.rcard.active{border-color:var(--red);box-shadow:0 0 0 2px rgba(232,20,10,.15)}
+.rc-name{font-weight:700;font-size:13px;color:#17311b}
+.rc-stats{display:flex;gap:12px;margin-top:4px;color:var(--muted);font-size:11.5px;font-weight:600}
+.rc-stats span:first-child{color:var(--red)}
+.rd{margin-top:8px;border-top:1px solid var(--line);padding-top:9px}
+.rd-title{font-weight:800;font-size:14px;color:#17311b}
+.rd-sub{color:var(--muted);font-size:12px;margin:2px 0 7px}
+.rd-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:7px}
+.bdg{background:#fdece8;color:var(--red);font-weight:700;font-size:11px;padding:3px 8px;border-radius:20px}
+.rd-row{font-size:12px;line-height:1.45;margin:4px 0;color:#374151}
+.rd-row b{color:#17311b}
+.rd-link{display:inline-block;margin:8px 0 6px;background:#eef4fb;color:#1155cc;font-weight:700;font-size:12px;text-decoration:none;padding:6px 11px;border-radius:8px}
+.rd-note{font-size:10px;color:var(--muted);line-height:1.4}
+.rd-prof{margin:8px 0 2px}
+.prof-h{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);font-weight:600;margin-bottom:3px}
+.prof-svg{width:100%;height:72px;display:block;background:#faf7f5;border-radius:8px}
+.prof-x{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:2px}
+.prof-fail,.prof-load{font-size:11px;color:var(--muted);padding:8px;background:#faf7f5;border-radius:8px}
+.note{border-top:1px solid var(--line);font-size:10.5px;color:var(--muted);line-height:1.4;padding:9px 14px 12px}
 .leaflet-popup-content-wrapper{border-radius:12px}
 .leaflet-popup-content{margin:12px 14px;font-family:Inter,system-ui,sans-serif}
 .pop-t{font-weight:800;font-size:14px;margin-bottom:3px;color:#17311b}
 .pop-d{font-size:12.5px;color:#374151;line-height:1.45}
-.pop-l{display:inline-block;margin-top:9px;background:#eef4fb;color:#1155cc;font-weight:700;font-size:12px;
-  text-decoration:none;padding:6px 11px;border-radius:8px}
+.pop-l{display:inline-block;margin-top:9px;background:#eef4fb;color:#1155cc;font-weight:700;font-size:12px;text-decoration:none;padding:6px 11px;border-radius:8px}
 .pill-tag{display:inline-block;font-size:10px;font-weight:800;color:#fff;padding:2px 7px;border-radius:20px;margin-bottom:5px;letter-spacing:.3px}
-body.folded #panel .p-body,body.folded #panel .p-foot,body.folded #panel .note{display:none}
-@media(max-width:560px){#panel{width:calc(100vw - 20px);left:10px;top:10px;max-height:52vh}}
+body.folded #panel .tabs,body.folded #panel .p-body,body.folded #panel .note{display:none}
+@media(max-width:560px){#panel{width:calc(100vw - 20px);left:10px;top:10px;max-height:60vh}}
 </style>
 </head>
 <body>
@@ -51,14 +74,27 @@ body.folded #panel .p-body,body.folded #panel .p-foot,body.folded #panel .note{d
 <div id="panel">
   <div class="p-head">
     <h1>🚴 Roquecor Cycling Week — area map <button class="collapse" id="fold" title="Collapse">–</button></h1>
-    <p>Everything within reach of the base: the five Tour de France stages as a route heatmap, the iconic climbs, and useful stops. Tap a layer to show or hide it, tap a pin or line for details.</p>
+    <p>Stops plus the five Tour de France stages. Use the tabs: browse stops, or open a single stage to isolate it with its stats and elevation profile.</p>
   </div>
-  <div class="p-body" id="legend"></div>
-  <div class="p-foot">
-    <button class="b green" id="fitBtn">Fit everything</button>
-    <button class="b ghost" id="homeBtn">Back to Roquecor</button>
+  <div class="tabs">
+    <button class="tab active" data-tab="stops" id="tabStops">Stops &amp; layers</button>
+    <button class="tab" data-tab="routes" id="tabRoutes">Tour routes</button>
   </div>
-  <div class="note">Pins sit at village / venue level (approximate). The five glowing Tour de France lines are full stages, reconstructed along each stage's real towns and roads (not the exact official GPS). Tap "Fit everything" to see all five. Prices are researched estimates, confirm before booking.</div>
+  <div class="p-body">
+    <div id="pane-stops">
+      <div id="legend"></div>
+      <div class="p-foot-inline">
+        <button class="b green" id="fitBtn">Fit everything</button>
+        <button class="b ghost" id="homeBtn">Back to Roquecor</button>
+      </div>
+    </div>
+    <div id="pane-routes" style="display:none">
+      <button class="showall" id="showAllBtn">Show all five (heatmap)</button>
+      <div id="routeList"></div>
+      <div id="routeDetail"></div>
+    </div>
+  </div>
+  <div class="note" id="footNote">Pins sit at village / venue level (approximate). Tour routes are reconstructed along each stage's real towns and roads (not exact official GPS); distance and elevation gain are the official published figures.</div>
 </div>
 
 <script>
@@ -76,10 +112,8 @@ const CATS = {
 };
 
 const POIS = [
-  // base
   {c:"base",n:"Roquecor (base)",lat:44.3228,lon:0.9442,d:"Home base. Peter & Florence's house; the whole week radiates from here."},
   {c:"base",n:"Touffailles (alt base, pool)",lat:44.2953,lon:0.9836,d:"Second possible base with a pool, ~10 min from Roquecor."},
-  // tour de france
   {c:"tdf",n:"Lauzerte (2022 Tour)",lat:44.2636,lon:1.1386,d:"2022 Stage 19 climbed the cobbled Côte de Lauzerte here (2 km @ 6.2%). Closest the Tour has come to Roquecor, ~15 km."},
   {c:"tdf",n:"Montcuq (2022 Tour)",lat:44.3339,lon:1.2064,d:"2022 Stage 19 rolled through the Quercy Blanc here on the way to Cahors."},
   {c:"tdf",n:"Valence d'Agen (2022 Tour)",lat:44.1069,lon:0.8853,d:"2022 Stage 19 crossed the Garonne near here (by the bastide of Auvillar)."},
@@ -89,25 +123,21 @@ const POIS = [
   {c:"tdf",n:"Agen (2024 start)",lat:44.2032,lon:0.6161,d:"Start of 2024 Stage 13 (Agen → Pau)."},
   {c:"tdf",n:"Castelsarrasin (2007 finish)",lat:44.0407,lon:1.1069,d:"Finish of 2007 Stage 17; Alberto Contador took the yellow jersey here."},
   {c:"tdf",n:"Montpezat-de-Quercy (2012 Tour)",lat:44.2419,lon:1.4783,d:"2012 Stage 18 threaded the Bas-Quercy near here (sprint in Cahors)."},
-  // climbs
   {c:"climb",n:"Côte de Lauzerte",lat:44.2585,lon:1.1300,d:"2 km @ 6.2%, four cobbled hairpins, Cat 4. The camp's signature climb, straight from the 2022 Tour."},
   {c:"climb",n:"Côte de Saint-Daunès",lat:44.3530,lon:1.1330,d:"1.6 km @ 6.3% (2022 Tour). A quiet Quercy Blanc ramp."},
   {c:"climb",n:"Bélaye viewpoint",lat:44.4783,lon:1.1889,d:"Short ~8% ramp to a clifftop viewpoint over the Lot (on the queen loop)."},
   {c:"climb",n:"Penne-d'Agenais",lat:44.3789,lon:0.8203,d:"Ramp to the hilltop basilica pitches up to ~14%. Huge views over the Lot valley."},
-  // route hubs
   {c:"route",n:"Lauzerte — Day-1 shakeout loops",lat:44.2690,lon:1.1470,d:"Start for the 50 km Castelsagrat and 44 km Montcuq easy loops.",u:"https://www.komoot.com/guide/1267628/cycling-around-lauzerte",ut:"Routes on Komoot"},
   {c:"route",n:"Montaigu-de-Quercy — official 32 km circuit",lat:44.3736,lon:1.0086,d:"The closest ride to the house; official tourism-office road circuit.",u:"https://www.calculitineraires.fr/index.php?id=582670",ut:"Circuit details"},
   {c:"route",n:"Anthé — Day-2 rolling loop",lat:44.3506,lon:0.8631,d:"67 km / 900 m all-paved Quercy Blanc loop; extend toward Tournon for 75-80 km.",u:"https://www.komoot.com/guide/1372636/road-cycling-routes-around-montaigu-de-quercy",ut:"Routes on Komoot"},
   {c:"route",n:"Prayssac — Day-3 vineyard loop",lat:44.5069,lon:1.1953,d:"68 km / 660 m through Cahors Malbec country and the Lot meanders.",u:"https://www.komoot.com/smarttour/35655697",ut:"Route on Komoot"},
   {c:"route",n:"Monsempron-Libos — Day-4 queen & Bonaguil",lat:44.4936,lon:0.9847,d:"Start for the 90 km Agenais queen loop (Bélaye, Tournon, Penne) and the Bonaguil castles loop.",u:"https://www.komoot.com/smarttour/e945709736",ut:"Route on Komoot"},
   {c:"route",n:"Canal de Garonne — flat / hot-day",lat:44.1140,lon:0.8770,d:"Traffic-free shaded towpath, Valence d'Agen to Moissac. The canicule or recovery option.",u:"https://en.canaldes2mersavelo.com/cycle-route/valence-d-agen-moissac",ut:"Greenway details"},
-  // bike shops
   {c:"shop",n:"Cycles Lamiche — Villeneuve-sur-Lot",lat:44.4130,lon:0.7110,d:"Best-equipped road workshop nearby. Book a group service ahead. ~30 min.",u:"https://www.cycles-lamiche.fr/",ut:"Website"},
   {c:"shop",n:"Cycles Soulier — Fumel",lat:44.4960,lon:0.9770,d:"Closest workshop to Roquecor for quick fixes. ~30 min.",u:"https://www.pagesjaunes.fr/annuaire/fumel-47/velos-cycles-commerce-reparation",ut:"Listing"},
   {c:"shop",n:"Veloclic — Cahors",lat:44.4520,lon:1.4360,d:"Bigger road / e-bike workshop for anything serious. ~50 min.",u:"https://www.veloclic.com/",ut:"Website"},
   {c:"shop",n:"Culture Vélo — Agen",lat:44.2080,lon:0.6210,d:"Full sales & repair; may rent road bikes (call to confirm). ~40 min.",u:"https://www.culturevelo.com/-Agen-",ut:"Website"},
   {c:"shop",n:"Cycles Feutrier — Valence d'Agen",lat:44.1120,lon:0.8910,d:"Sales & repair since 1996; handy near the canal. ~40 min.",u:"https://cycles-feutrier.fr/",ut:"Website"},
-  // cafes / villages / water
   {c:"cafe",n:"Tournon-d'Agenais",lat:44.3050,lon:0.8161,d:"Hilltop bastide (plus beau village), café on the square, water fountain. ~12 min."},
   {c:"cafe",n:"Bourg-de-Visa",lat:44.2725,lon:0.9931,d:"Arcaded square and fountain, ~12 min. Ferme-auberge close by."},
   {c:"cafe",n:"Montaigu-de-Quercy",lat:44.3700,lon:1.0150,d:"Village + emerald lake; Librairie Café (coffee & cookies), Sat market, water."},
@@ -115,35 +145,51 @@ const POIS = [
   {c:"cafe",n:"Puy-l'Évêque",lat:44.5019,lon:1.1361,d:"Cliffside Lot village; cafés, a panorama over the vineyards, and water."},
   {c:"cafe",n:"Pujols",lat:44.3906,lon:0.6836,d:"Plus beau village above Villeneuve; café and long views."},
   {c:"cafe",n:"Auvillar",lat:44.0678,lon:0.8919,d:"Plus beau village with a circular market hall; coffee ~5 km off the canal."},
-  // wine
   {c:"wine",n:"Château du Cèdre — Vire-sur-Lot",lat:44.5086,lon:1.0947,d:"Organic Cahors reference estate; cellar tour + tasting from €15. ~45 min.",u:"https://www.chateauducedre.com/",ut:"Website"},
   {c:"wine",n:"Château de Haute-Serre — Cieurac",lat:44.3600,lon:1.4700,d:"Malbec tour + tasting €10-25, with an on-site restaurant for lunch. ~1h.",u:"https://hauteserre.fr/",ut:"Website"},
   {c:"wine",n:"Château de Mercuès",lat:44.4919,lon:1.3592,d:"13th-century castle over the Lot; cellar tour + tasting €15-27. ~50 min.",u:"https://chateaudemercues.com/",ut:"Website"},
   {c:"wine",n:"Vignerons du Quercy — Montpezat",lat:44.2470,lon:1.4680,d:"Closest wine: Coteaux du Quercy co-op, guided tasting ~€6-8. ~35-40 min.",u:"http://www.les-vignerons-du-quercy.com/",ut:"Website"},
-  // experiences
   {c:"exp",n:"Copeyre kayak — Puy-l'Évêque",lat:44.4995,lon:1.1420,d:"Canoe/kayak on the Lot past cliffs and châteaux, shuttle included. ~€22-26 pp, ~40 min.",u:"https://www.copeyre.com/location-bateau-puy-l-eveque.html",ut:"Website"},
   {c:"exp",n:"Kalapca kayak — Bouziès / St-Cirq",lat:44.4783,lon:1.6183,d:"Paddle under Saint-Cirq-Lapopie; 4-22 km, €12-29 pp. The postcard day (~1h30).",u:"https://www.kalapca.com/",ut:"Website"},
   {c:"exp",n:"Ferme-Auberge de Lasbourdettes — Bourg-de-Visa",lat:44.2670,lon:0.9990,d:"Classic Quercy farm feast (duck, foie gras), groups to 20, €22-38. ~12 min.",u:"http://www.gite-lasbourdettes.com/",ut:"Website"},
   {c:"exp",n:"Saint-Cirq-Lapopie",lat:44.4667,lon:1.6717,d:"One of France's most beautiful villages, perched over the Lot. The kayak scene."},
-  // lodging
   {c:"bed",n:"Gîtes Grand Pré — Roquecor",lat:44.3180,lon:0.9500,d:"In the village: up to 23 across separate units, pool, 300 m² barn for bikes. €4,490-4,990/wk.",u:"https://www.gites-grandpre.com/",ut:"Website"},
   {c:"bed",n:"Gîte de l'ébéniste — Sauveterre-la-Lémance",lat:44.5936,lon:1.0269,d:"Sleeps 10-14, private pool, all-in pricing €2,650/wk (value pick). ~30 min.",u:"https://www.gite-ebeniste-perigord.fr/",ut:"Website"},
   {c:"bed",n:"Vieux Mirou (2 gîtes) — Valeilles",lat:44.3300,lon:0.9000,d:"Two adjoining gîtes, two pools, ~8 min from Roquecor. €3,514-4,717/wk for both.",u:"https://www.gites.co.uk/2-large-gites-with-2-private-pools-sleeps-20/l.1423",ut:"Listing"},
-  // airports
   {c:"air",n:"Toulouse-Blagnac (TLS)",lat:43.6293,lon:1.3680,d:"~1h15 drive. Best connections; US guests route via a European hub."},
   {c:"air",n:"Bergerac (EGC)",lat:44.8256,lon:0.5186,d:"~1h drive. Cheap direct UK (Ryanair, Jet2), summer only."},
   {c:"air",n:"Agen (AGF)",lat:44.1747,lon:0.5906,d:"~40 min. Domestic only (Paris-Orly) — confirm it's running for 2027."},
 ];
 
-// Full TdF stage routes, reconstructed along each stage's real towns and roads (OSRM), as encoded polylines
 const HEAT = "#FF4A1C";
 const TDF_ROUTES = [
-  {name:"2022 Stage 19: Castelnau-Magnoac to Cahors", poly:"}qegGydlBkg@~iGulRuaIywRs}CimA}sDAerJsaGe~A}wKmgMixGghB{mLqxPgwOucDs`JsrJ}x@_iDrJuqCgHpq@{{AddF}hFr_F_rF~_DmtDbNufAdnGowD_}C_kDyWslBi{A_gCt~Buw@_wEilB{y@ukE_vIsl@{a@{dDxlC__EokFe|@lTc_CcpIoeCdn@nxBcrP`Lqp@c}@~SeoJg~Fcs@wgBlWyj@e{BajBscAifNcdCmsBkVqwFgfAg}A{nAmyJcnEy^"},
-  {name:"2024 Stage 12: Aurillac to Villeneuve-sur-Lot", poly:"kteqGin|MzyDlkFfGboKjsAj_A_RjcCz`Dx{B~w@hcDaq@nxBlJbnMylA~jC}x@xaHdg@riAui@r_Glb@jdAcr@zwBxP~dKbb@h\\ug@rgBhcCdsAiBbqE_vB|mKxjAreAat@hm@bYbl@f{A|BbuBj`@kPd|AvzErsEhV`kW~f@~`A~uBgdAnw@nx@_FfgDrr@piC{k@fqBpgChpC}c@vgBrhA~bVhxDtdGkS`xFnzAtk@pyAnnDzHf}Db}DbxBi_AxiAzCt~AkC_`Bl~AqsB~bGxnCnz@llDjzDbhFjLzwCnrJcvC~}@jbKkj@vaDxaAtjCi`A~xIhjDtmJpjM`dSeaAfvR"},
-  {name:"2024 Stage 13: Agen to Pau", poly:"mmxlGqiwBvpIpwQpIbfEyk@t`C|jCbfJpUttHuf@n|BfgAbjHdkLfmCmLbbCp_Aja@~eMziBzmB~gDxqEdr@dzKjyP`eGd_BxhEtzTluCpc@~`AvkDeP|nFxfH`uYdIziDf{BsdDblHq`AxvF{vIbuHcRlqMgtH~|Bvc@~dAhnC~uBwa@t}Bq`AvjCzbBlsBnkSj{BjBbSjlDx{F~sP"},
-  {name:"2007 Stage 17: Pau to Castelsarrasin", poly:"s}fgG|lgAx~@}cDm|AwhFbqFwd_@hoEwgMig@gmGteBe}Gwb@_hDidDlc@qYmpC_mAwH}_AchBkLeeD}sTk~FcnA}bI{fB_qD}dAopNxtAgpDofAsjMqMsy_@n~@cmG}WkjSh\\hl@hFur@ygUifFosMy~OovC_uAdBsqAeEzoAygEkeDmsElnBgaSmzBkiKamJwbBwgFrJuqCgHpq@at@wcGa|@pr@okCogCapAi`EsxEawEmwF}^_nAjyBo`Ch`@"},
-  {name:"2012 Stage 18: Blagnac to Brive-la-Gaillarde", poly:"yniiGokoG|uAuKmCkiCknEueAcfYbpHm~Jn~Jw{Mbw@awPuuG}nDjaJ_}NptJ_lD}tCqiA}bK_~Ci`FkrHk{UoiAwsAaaC~uD_uLkfAorBpoCmpOrx@soB~EgqJixLgaQ~|@ocE_lJyoHmsAsvWzaN}zM_t@|b@d|D}nAsxBpz@edAwlIfOylKksEe_H~wDehFssAweHfsEgkAqdH"},
+  {name:"2022 · Stage 19",from:"Castelnau-Magnoac",to:"Cahors",dist:188.3,gain:1326,type:"Flat / sprint",winner:"Christophe Laporte",
+   climbs:"Côte de Lauzerte (2 km @ 6.2%), Côte de Saint-Daunès (1.6 km @ 6.3%).",
+   scenes:"Crosses the Garonne by Auvillar, then the Quercy Blanc past hilltop Lauzerte and Montcuq, finishing in Cahors (Malbec, Pont Valentré). The closest the Tour has come to Roquecor.",
+   link:"https://www.cyclingstage.com/tour-de-france-2022-route/stage-19-tdf-2022/",linkText:"Stage details",
+   poly:"}qegGydlBkg@~iGulRuaIywRs}CimA}sDAerJsaGe~A}wKmgMixGghB{mLqxPgwOucDs`JsrJ}x@_iDrJuqCgHpq@{{AddF}hFr_F_rF~_DmtDbNufAdnGowD_}C_kDyWslBi{A_gCt~Buw@_wEilB{y@ukE_vIsl@{a@{dDxlC__EokFe|@lTc_CcpIoeCdn@nxBcrP`Lqp@c}@~SeoJg~Fcs@wgBlWyj@e{BajBscAifNcdCmsBkVqwFgfAg}A{nAmyJcnEy^"},
+  {name:"2024 · Stage 12",from:"Aurillac",to:"Villeneuve-sur-Lot",dist:203.6,gain:2200,type:"Hilly / sprint",winner:"Biniam Girmay",
+   climbs:"Côte d'Autoire (2.7 km @ 5.9%), Côte de Rocamadour (2.0 km @ 5.8%), Côte de Montcléra (2.0 km @ 4.6%).",
+   scenes:"Volcanic Cantal, clifftop Rocamadour and the Autoire cirque, across the Quercy causses and down the Lot valley through Fumel to the bastide of Villeneuve-sur-Lot.",
+   link:"https://www.cyclingstage.com/tour-de-france-2024-route/stage-12-tdf-2024/",linkText:"Stage details",
+   poly:"kteqGin|MzyDlkFfGboKjsAj_A_RjcCz`Dx{B~w@hcDaq@nxBlJbnMylA~jC}x@xaHdg@riAui@r_Glb@jdAcr@zwBxP~dKbb@h\\ug@rgBhcCdsAiBbqE_vB|mKxjAreAat@hm@bYbl@f{A|BbuBj`@kPd|AvzErsEhV`kW~f@~`A~uBgdAnw@nx@_FfgDrr@piC{k@fqBpgChpC}c@vgBrhA~bVhxDtdGkS`xFnzAtk@pyAnnDzHf}Db}DbxBi_AxiAzCt~AkC_`Bl~AqsB~bGxnCnz@llDjzDbhFjLzwCnrJcvC~}@jbKkj@vaDxaAtjCi`A~xIhjDtmJpjM`dSeaAfvR"},
+  {name:"2024 · Stage 13",from:"Agen",to:"Pau",dist:165.3,gain:2000,type:"Flat / hilly finale",winner:"Jasper Philipsen",
+   climbs:"Côte de Blachon (1.5 km @ 6.9%), Côte de Simacourbe (1.8 km @ 6.4%).",
+   scenes:"Starts in Agen (pruneaux), through the Renaissance bastide of Nérac and Buzet wine into Armagnac country via Nogaro, finishing in Pau below the Pyrenees.",
+   link:"https://www.cyclingstage.com/tour-de-france-2024-route/stage-13-tdf-2024/",linkText:"Stage details",
+   poly:"mmxlGqiwBvpIpwQpIbfEyk@t`C|jCbfJpUttHuf@n|BfgAbjHdkLfmCmLbbCp_Aja@~eMziBzmB~gDxqEdr@dzKjyP`eGd_BxhEtzTluCpc@~`AvkDeP|nFxfH`uYdIziDf{BsdDblHq`AxvF{vIbuHcRlqMgtH~|Bvc@~dAhnC~uBwa@t}Bq`AvjCzbBlsBnkSj{BjBbSjlDx{F~sP"},
+  {name:"2007 · Stage 17",from:"Pau",to:"Castelsarrasin",dist:188.5,gain:null,type:"Flat / transition",winner:"Daniele Bennati",
+   climbs:"Mostly rolling; last climb the Côte de la Montagnère, 19.5 km from the line.",
+   scenes:"Pyrenean foothills across Gascony and the Gers into the Lomagne. The day Contador took the yellow jersey and kept it to Paris.",
+   link:"https://www.procyclingstats.com/race/tour-de-france/2007/stage-17",linkText:"Stage details",
+   poly:"s}fgG|lgAx~@}cDm|AwhFbqFwd_@hoEwgMig@gmGteBe}Gwb@_hDidDlc@qYmpC_mAwH}_AchBkLeeD}sTk~FcnA}bI{fB_qD}dAopNxtAgpDofAsjMqMsy_@n~@cmG}WkjSh\\hl@hFur@ygUifFosMy~OovC_uAdBsqAeEzoAygEkeDmsElnBgaSmzBkiKamJwbBwgFrJuqCgHpq@at@wcGa|@pr@okCogCapAi`EsxEawEmwF}^_nAjyBo`Ch`@"},
+  {name:"2012 · Stage 18",from:"Blagnac",to:"Brive-la-Gaillarde",dist:222.5,gain:null,type:"Flat / rolling",winner:"Mark Cavendish",
+   climbs:"Côte de Cahors and a set of cat-4 rises; intermediate sprint in Cahors.",
+   scenes:"Threads the Bas-Quercy (Lafrançaise, Montpezat-de-Quercy), the Lot at Cahors, then up via Souillac to Brive. Cavendish win, led out by yellow-jersey Wiggins.",
+   link:"https://www.procyclingstats.com/race/tour-de-france/2012/stage-18",linkText:"Stage details",
+   poly:"yniiGokoG|uAuKmCkiCknEueAcfYbpHm~Jn~Jw{Mbw@awPuuG}nDjaJ_}NptJ_lD}tCqiA}bK_~Ci`FkrHk{UoiAwsAaaC~uD_uLkfAorBpoCmpOrx@soB~EgqJixLgaQ~|@ocE_lJyoHmsAsvWzaN}zM_t@|b@d|D}nAsxBpz@edAwlIfOylKksEe_H~wDehFssAweHfsEgkAqdH"},
 ];
+
 function decodePolyline(str){
   let index=0,lat=0,lng=0,coords=[],shift,result,byte;
   while(index<str.length){
@@ -156,6 +202,23 @@ function decodePolyline(str){
     coords.push([lat/1e5,lng/1e5]);
   }
   return coords;
+}
+function hav(a,b){ const R=6371,toR=Math.PI/180;
+  const dLat=(b[0]-a[0])*toR,dLng=(b[1]-a[1])*toR;
+  const s=Math.sin(dLat/2)**2+Math.cos(a[0]*toR)*Math.cos(b[0]*toR)*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.sqrt(s)); }
+function densify(coords,target){
+  const cum=[0]; let total=0;
+  for(let i=1;i<coords.length;i++){ total+=hav(coords[i-1],coords[i]); cum.push(total); }
+  if(total===0) return coords.slice();
+  const out=[];
+  for(let k=0;k<target;k++){
+    const d=total*k/(target-1);
+    let i=1; while(i<cum.length&&cum[i]<d) i++; if(i>=cum.length) i=cum.length-1;
+    const t=(d-cum[i-1])/((cum[i]-cum[i-1])||1), a=coords[i-1], b=coords[i];
+    out.push([a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t]);
+  }
+  return out;
 }
 
 const map = L.map('map',{zoomControl:false,scrollWheelZoom:true}).setView([44.36,1.02],10);
@@ -181,33 +244,134 @@ POIS.forEach(p=>{
   const m=L.marker([p.lat,p.lon],{icon:mkIcon(cat)}).bindPopup(popupHtml(p,cat),{maxWidth:260});
   m.addTo(groups[p.c]); counts[p.c]++; allLatLng.push([p.lat,p.lon]);
 });
-// TdF full routes go into the tdf group, drawn heatmap-style (soft glow + core line)
+
+// TdF routes: decode, draw heatmap style, keep handles for isolate/highlight
 const routeLatLng=[];
-TDF_ROUTES.forEach(r=>{
-  const pts=decodePolyline(r.poly);
-  for(const p of pts) routeLatLng.push(p);
-  const pop=`<div><span class="pill-tag" style="background:${HEAT}">Tour de France</span><div class="pop-t">${r.name}</div><div class="pop-d">Reconstructed along the stage's real towns and roads. Not the exact official GPS track.</div></div>`;
-  L.polyline(pts,{color:HEAT,weight:9,opacity:.16,lineCap:'round',lineJoin:'round'}).addTo(groups.tdf);
-  L.polyline(pts,{color:HEAT,weight:3,opacity:.6,lineCap:'round',lineJoin:'round'}).bindPopup(pop,{maxWidth:260}).addTo(groups.tdf);
+TDF_ROUTES.forEach((r,i)=>{
+  r.latlngs=decodePolyline(r.poly);
+  for(const p of r.latlngs) routeLatLng.push(p);
+  r.glow=L.polyline(r.latlngs,{color:HEAT,weight:9,opacity:.16,lineCap:'round',lineJoin:'round'}).addTo(groups.tdf);
+  r.core=L.polyline(r.latlngs,{color:HEAT,weight:3,opacity:.6,lineCap:'round',lineJoin:'round'}).addTo(groups.tdf);
+  r.core.on('click',()=>{ setTab('routes'); selectRoute(i); });
 });
 Object.keys(groups).forEach(k=>groups[k].addTo(map));
 
-// legend / toggles
+// heatmap vs isolate styling
+function styleHeatmap(){
+  TDF_ROUTES.forEach(r=>{
+    r.glow.setStyle({color:HEAT,weight:9,opacity:.16});
+    r.core.setStyle({color:HEAT,weight:3,opacity:.6});
+  });
+}
+function styleIsolate(sel){
+  TDF_ROUTES.forEach((r,i)=>{
+    if(i===sel){
+      r.glow.setStyle({color:'#ffffff',weight:8,opacity:.9});
+      r.core.setStyle({color:'#E8140A',weight:4,opacity:1});
+      r.glow.bringToFront(); r.core.bringToFront();
+    } else {
+      r.glow.setStyle({opacity:0});
+      r.core.setStyle({color:'#B9B0A8',weight:2,opacity:.5});
+    }
+  });
+}
+
+// legend / layer toggles
 const legend=document.getElementById('legend');
 Object.keys(CATS).forEach(k=>{
   const cat=CATS[k];
   const row=document.createElement('label'); row.className='legrow'; row.dataset.k=k;
-  row.innerHTML=`<input type="checkbox" checked/><span class="dot" style="background:${cat.color}">${cat.glyph}</span>`+
+  row.innerHTML=`<input type="checkbox" checked style="display:none"/><span class="dot" style="background:${cat.color}">${cat.glyph}</span>`+
     `<span class="nm">${cat.label}</span><span class="ct">${counts[k]}</span>`;
   row.addEventListener('click',e=>{
     e.preventDefault();
-    const on=map.hasLayer(groups[k]);
-    if(on){map.removeLayer(groups[k]); row.classList.add('off'); row.querySelector('input').checked=false;}
-    else{groups[k].addTo(map); row.classList.remove('off'); row.querySelector('input').checked=true;}
+    if(map.hasLayer(groups[k])){map.removeLayer(groups[k]); row.classList.add('off');}
+    else{groups[k].addTo(map); row.classList.remove('off');}
   });
   legend.appendChild(row);
 });
 
+// route list
+const routeList=document.getElementById('routeList');
+const routeDetail=document.getElementById('routeDetail');
+TDF_ROUTES.forEach((r,i)=>{
+  const b=document.createElement('button'); b.className='rcard'; b.dataset.i=i;
+  b.innerHTML=`<div class="rc-name">${r.name}: ${r.from} to ${r.to}</div>
+    <div class="rc-stats"><span>${r.dist} km</span><span>▲ ${r.gain?r.gain+' m':'n/a'}</span><span>${r.type}</span></div>`;
+  b.addEventListener('click',()=>selectRoute(i));
+  routeList.appendChild(b);
+});
+
+let selected=-1;
+function selectRoute(i){
+  selected=i; const r=TDF_ROUTES[i];
+  if(!map.hasLayer(groups.tdf)) groups.tdf.addTo(map);
+  styleIsolate(i);
+  [...routeList.children].forEach((c,ci)=>c.classList.toggle('active',ci===i));
+  document.getElementById('showAllBtn').classList.add('dim');
+  map.fitBounds(r.core.getBounds(),{padding:[40,40]});
+  routeDetail.innerHTML=`<div class="rd">
+    <div class="rd-title">${r.name}</div>
+    <div class="rd-sub">${r.from} to ${r.to}</div>
+    <div class="rd-badges"><span class="bdg">${r.dist} km</span><span class="bdg">▲ ${r.gain?r.gain+' m':'n/a'}</span><span class="bdg">${r.type}</span></div>
+    <div class="rd-row"><b>Winner:</b> ${r.winner}</div>
+    <div class="rd-row"><b>Climbs:</b> ${r.climbs}</div>
+    <div class="rd-row"><b>Scenery:</b> ${r.scenes}</div>
+    <div class="rd-prof" id="rdProf"><div class="prof-load">Loading elevation profile…</div></div>
+    <a class="rd-link" href="${r.link}" target="_blank" rel="noopener">${r.linkText} ↗</a>
+    <div class="rd-note">Route reconstructed along the stage's real towns and roads. Distance and elevation gain are the official published figures; the profile is an approximate elevation sample.</div>
+  </div>`;
+  loadProfile(r, document.getElementById('rdProf'));
+}
+function showAllRoutes(){
+  selected=-1; styleHeatmap();
+  [...routeList.children].forEach(c=>c.classList.remove('active'));
+  document.getElementById('showAllBtn').classList.remove('dim');
+  routeDetail.innerHTML='';
+  fitAll();
+}
+document.getElementById('showAllBtn').addEventListener('click',showAllRoutes);
+
+async function loadProfile(r, el){
+  if(r._prof){ drawProfile(r._prof,r,el); return; }
+  const pts=densify(r.latlngs,90);
+  const lat=pts.map(p=>p[0].toFixed(4)).join(',');
+  const lng=pts.map(p=>p[1].toFixed(4)).join(',');
+  try{
+    const res=await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`);
+    const j=await res.json();
+    const ele=j.elevation;
+    if(!ele||!ele.length) throw new Error('no data');
+    const cum=[0]; let tot=0; for(let i=1;i<pts.length;i++){tot+=hav(pts[i-1],pts[i]);cum.push(tot);}
+    const scale=r.dist/((tot)||1);
+    r._prof={dist:cum.map(d=>d*scale),ele};
+    if(selected===TDF_ROUTES.indexOf(r)) drawProfile(r._prof,r,el);
+  }catch(e){ el.innerHTML='<div class="prof-fail">Elevation profile unavailable right now (needs an internet connection).</div>'; }
+}
+function drawProfile(p,r,el){
+  const W=300,H=90,pad=12;
+  const eMin=Math.min(...p.ele), eMax=Math.max(...p.ele), dMax=p.dist[p.dist.length-1]||r.dist;
+  const X=d=>pad+(d/dMax)*(W-2*pad), Y=e=>(H-pad)-((e-eMin)/((eMax-eMin)||1))*(H-2*pad);
+  let area='M '+X(0).toFixed(1)+' '+(H-pad);
+  for(let i=0;i<p.ele.length;i++) area+=' L '+X(p.dist[i]).toFixed(1)+' '+Y(p.ele[i]).toFixed(1);
+  area+=' L '+X(dMax).toFixed(1)+' '+(H-pad)+' Z';
+  let line=''; for(let i=0;i<p.ele.length;i++) line+=(i?' L ':'M ')+X(p.dist[i]).toFixed(1)+' '+Y(p.ele[i]).toFixed(1);
+  el.innerHTML=`<div class="prof-h"><span>Approx. terrain profile</span><span>${Math.round(eMin)}–${Math.round(eMax)} m</span></div>
+    <svg viewBox="0 0 ${W} ${H}" class="prof-svg" preserveAspectRatio="none"><path d="${area}" fill="rgba(232,20,10,.14)"/><path d="${line}" fill="none" stroke="#E8140A" stroke-width="1.6"/></svg>
+    <div class="prof-x"><span>0 km</span><span>${r.dist} km</span></div>`;
+}
+
+// tabs
+function setTab(t){
+  document.getElementById('tabStops').classList.toggle('active',t==='stops');
+  document.getElementById('tabRoutes').classList.toggle('active',t==='routes');
+  document.getElementById('pane-stops').style.display = t==='stops'?'':'none';
+  document.getElementById('pane-routes').style.display = t==='routes'?'':'none';
+}
+document.getElementById('tabStops').addEventListener('click',()=>setTab('stops'));
+document.getElementById('tabRoutes').addEventListener('click',()=>setTab('routes'));
+
+// bounds + buttons
 const localBounds=L.latLngBounds(allLatLng);
 const fullBounds=L.latLngBounds(allLatLng.concat(routeLatLng));
 function fitAll(){ map.fitBounds(fullBounds,{padding:[40,40]}); }
